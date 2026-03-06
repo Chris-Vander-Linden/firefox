@@ -2,26 +2,24 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
-import React, { Component } from "devtools/client/shared/vendor/react";
-import {
+"use strict";
+
+const React = require("devtools/client/shared/vendor/react");
+const { Component } = React;
+
+const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
+const {
   button,
   div,
   label,
   input,
   span,
-} from "devtools/client/shared/vendor/react-dom-factories";
-import PropTypes from "devtools/client/shared/vendor/react-prop-types";
-import { connect } from "devtools/client/shared/vendor/react-redux";
-import { CloseButton } from "./Button/index";
-
-import DebuggerImage from "./DebuggerImage";
-import actions from "../../actions/index";
-import { getSearchOptions } from "../../selectors/index";
+} = require("devtools/client/shared/vendor/react-dom-factories");
 
 const classnames = require("resource://devtools/client/shared/classnames.js");
 const SearchModifiers = require("resource://devtools/client/shared/components/SearchModifiers.js");
 
-const arrowBtn = (onClick, type, className, tooltip) => {
+const arrowBtn = (onClick, type, className, tooltip, Icon) => {
   const props = {
     className,
     key: type,
@@ -31,31 +29,13 @@ const arrowBtn = (onClick, type, className, tooltip) => {
   };
   return button(
     props,
-    React.createElement(DebuggerImage, {
+    React.createElement(Icon, {
       name: type,
     })
   );
 };
 
-export class SearchInput extends Component {
-  static defaultProps = {
-    expanded: false,
-    hasPrefix: false,
-    selectedItemId: "",
-    size: "",
-    showClose: true,
-  };
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      history: [],
-      excludePatterns: this.props.showSearchModifiers
-        ? props.searchOptions.excludePatterns
-        : null,
-    };
-  }
-
+class SearchInput extends Component {
   static get propTypes() {
     return {
       count: PropTypes.number.isRequired,
@@ -84,10 +64,32 @@ export class SearchInput extends Component {
       disabled: PropTypes.bool,
       summaryMsg: PropTypes.string,
       searchKey: PropTypes.string.isRequired,
-      searchOptions: PropTypes.object,
-      setSearchOptions: PropTypes.func,
+      searchOptions: PropTypes.object.isRequired,
+      setSearchOptions: PropTypes.func.isRequired,
       showSearchModifiers: PropTypes.bool.isRequired,
       onToggleSearchModifier: PropTypes.func,
+      prevButtonTitle: PropTypes.string.isRequired,
+      nextButtonTitle: PropTypes.string.isRequired,
+      CloseButton: PropTypes.elementType.isRequired,
+      Icon: PropTypes.elementType.isRequired,
+    };
+  }
+
+  static defaultProps = {
+    expanded: false,
+    hasPrefix: false,
+    selectedItemId: "",
+    size: "",
+    showClose: true,
+  };
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      history: [],
+      excludePatterns: this.props.showSearchModifiers
+        ? (props.searchOptions?.excludePatterns ?? "")
+        : null,
     };
   }
 
@@ -117,20 +119,23 @@ export class SearchInput extends Component {
   }
 
   renderArrowButtons() {
-    const { handleNext, handlePrev } = this.props;
+    const { handleNext, handlePrev, Icon, prevButtonTitle, nextButtonTitle } =
+      this.props;
 
     return [
       arrowBtn(
         handlePrev,
         "arrow-up",
         classnames("nav-btn", "prev"),
-        L10N.getFormatStr("editor.searchResults.prevResult")
+        prevButtonTitle,
+        Icon
       ),
       arrowBtn(
         handleNext,
         "arrow-down",
         classnames("nav-btn", "next"),
-        L10N.getFormatStr("editor.searchResults.nextResult")
+        nextButtonTitle,
+        Icon
       ),
     ];
   }
@@ -222,11 +227,11 @@ export class SearchInput extends Component {
   }
 
   renderSpinner() {
-    const { isLoading } = this.props;
+    const { isLoading, Icon } = this.props;
     if (!isLoading) {
       return null;
     }
-    return React.createElement(DebuggerImage, {
+    return React.createElement(Icon, {
       name: "loader",
       className: "spin",
     });
@@ -279,7 +284,10 @@ export class SearchInput extends Component {
     );
   }
 
+  // move logic to wrapper?
   renderClose() {
+    const { CloseButton } = this.props;
+
     if (!this.props.showClose) {
       return null;
     }
@@ -307,6 +315,7 @@ export class SearchInput extends Component {
       showErrorEmoji,
       size,
       disabled,
+      Icon,
     } = this.props;
 
     const inputProps = {
@@ -340,7 +349,7 @@ export class SearchInput extends Component {
           "aria-owns": "result-list",
           "aria-expanded": expanded,
         },
-        React.createElement(DebuggerImage, {
+        React.createElement(Icon, {
           name: "search",
         }),
         input(inputProps),
@@ -359,10 +368,5 @@ export class SearchInput extends Component {
     );
   }
 }
-const mapStateToProps = (state, props) => ({
-  searchOptions: getSearchOptions(state, props.searchKey),
-});
 
-export default connect(mapStateToProps, {
-  setSearchOptions: actions.setSearchOptions,
-})(SearchInput);
+module.exports = SearchInput;
