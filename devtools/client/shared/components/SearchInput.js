@@ -2,24 +2,30 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
-import React, { Component } from "devtools/client/shared/vendor/react";
-import {
+"use strict";
+
+const React = require("devtools/client/shared/vendor/react");
+const { Component } = React;
+
+const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
+const {
   button,
   div,
   label,
   input,
   span,
-} from "devtools/client/shared/vendor/react-dom-factories";
-import PropTypes from "devtools/client/shared/vendor/react-prop-types";
-import { connect } from "devtools/client/shared/vendor/react-redux";
-import { CloseButton } from "./Button/index";
+} = require("devtools/client/shared/vendor/react-dom-factories");
 
-import DebuggerImage from "./DebuggerImage";
-import actions from "../../actions/index";
-import { getSearchOptions } from "../../selectors/index";
+const DebuggerImage = require("devtools/client/shared/components/DebuggerImage");
+const CloseButton = require("devtools/client/shared/components/CloseButton");
 
 const classnames = require("resource://devtools/client/shared/classnames.js");
 const SearchModifiers = require("resource://devtools/client/shared/components/SearchModifiers.js");
+
+const { LocalizationHelper } = require("resource://devtools/shared/l10n.js");
+const locale = new LocalizationHelper(
+  "devtools/client/locales/components.properties"
+);
 
 const arrowBtn = (onClick, type, className, tooltip) => {
   const props = {
@@ -37,25 +43,7 @@ const arrowBtn = (onClick, type, className, tooltip) => {
   );
 };
 
-export class SearchInput extends Component {
-  static defaultProps = {
-    expanded: false,
-    hasPrefix: false,
-    selectedItemId: "",
-    size: "",
-    showClose: true,
-  };
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      history: [],
-      excludePatterns: this.props.showSearchModifiers
-        ? props.searchOptions.excludePatterns
-        : null,
-    };
-  }
-
+class SearchInput extends Component {
   static get propTypes() {
     return {
       count: PropTypes.number.isRequired,
@@ -84,10 +72,28 @@ export class SearchInput extends Component {
       disabled: PropTypes.bool,
       summaryMsg: PropTypes.string,
       searchKey: PropTypes.string.isRequired,
-      searchOptions: PropTypes.object,
-      setSearchOptions: PropTypes.func,
+      searchOptions: PropTypes.object.isRequired,
+      setSearchOptions: PropTypes.func.isRequired,
       showSearchModifiers: PropTypes.bool.isRequired,
       onToggleSearchModifier: PropTypes.func,
+    };
+  }
+
+  static defaultProps = {
+    expanded: false,
+    hasPrefix: false,
+    selectedItemId: "",
+    size: "",
+    showClose: true,
+  };
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      history: [],
+      excludePatterns: this.props.showSearchModifiers
+        ? (props.searchOptions?.excludePatterns ?? "")
+        : null,
     };
   }
 
@@ -124,13 +130,15 @@ export class SearchInput extends Component {
         handlePrev,
         "arrow-up",
         classnames("nav-btn", "prev"),
-        L10N.getFormatStr("editor.searchResults.prevResult")
+        locale.getStr("editor.searchResults.prevResult"),
+        DebuggerImage
       ),
       arrowBtn(
         handleNext,
         "arrow-down",
         classnames("nav-btn", "next"),
-        L10N.getFormatStr("editor.searchResults.nextResult")
+        locale.getStr("editor.searchResults.nextResult"),
+        DebuggerImage
       ),
     ];
   }
@@ -359,10 +367,5 @@ export class SearchInput extends Component {
     );
   }
 }
-const mapStateToProps = (state, props) => ({
-  searchOptions: getSearchOptions(state, props.searchKey),
-});
 
-export default connect(mapStateToProps, {
-  setSearchOptions: actions.setSearchOptions,
-})(SearchInput);
+module.exports = SearchInput;

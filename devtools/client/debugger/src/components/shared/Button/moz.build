@@ -8,7 +8,6 @@ DIRS += [
 ]
 
 CompiledModules(
-    "CloseButton.js",
     "CommandBarButton.js",
     "index.js",
     "PaneToggleButton.js",

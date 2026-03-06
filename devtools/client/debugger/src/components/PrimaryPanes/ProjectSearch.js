@@ -21,14 +21,14 @@ import {
   getNavigateCounter,
 } from "../../selectors/index";
 
-import SearchInput from "../shared/SearchInput";
-import DebuggerImage from "../shared/DebuggerImage";
-
 const { PluralForm } = require("resource://devtools/shared/plural-form.js");
 const classnames = require("resource://devtools/client/shared/classnames.js");
 const Tree = require("resource://devtools/client/shared/components/Tree.js");
 const { debounce } = require("resource://devtools/shared/debounce.js");
 const { throttle } = require("resource://devtools/shared/throttle.js");
+
+const DebuggerImage = require("devtools/client/shared/components/DebuggerImage");
+const SearchInput = require("devtools/client/shared/components/SearchInput");
 
 const {
   HTMLTooltip,
@@ -412,10 +412,12 @@ export class ProjectSearch extends Component {
       excludePatternsPlaceholder: L10N.getStr(
         "projectTextSearch.excludePatterns.placeholder"
       ),
-      ref: "searchInput",
-      showSearchModifiers: true,
       searchKey: searchKeys.PROJECT_SEARCH,
       onToggleSearchModifier: this.doSearch,
+      searchOptions: {},
+      setSearchOptions: () => {},
+      expanded: false,
+      hasPrefix: false,
     });
   }
 
