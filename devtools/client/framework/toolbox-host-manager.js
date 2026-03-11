@@ -55,6 +55,8 @@ const PREVIOUS_HOST = "devtools.toolbox.previousHost";
 let ID_COUNTER = 1;
 
 class ToolboxHostManager {
+  #onMessageHandler;
+
   constructor(commands, hostType, hostOptions) {
     this.commands = commands;
 
@@ -85,7 +87,7 @@ class ToolboxHostManager {
     // from `switchHostToTab` method.
     this.collectPendingMessages = null;
     this.setMinWidthWithZoom = this.setMinWidthWithZoom.bind(this);
-    this._onMessage = this._onMessage.bind(this);
+    this.#onMessageHandler = event => this.#onMessage(event);
     Services.prefs.addObserver(ZOOM_VALUE_PREF, this.setMinWidthWithZoom);
   }
   /**
@@ -106,7 +108,7 @@ class ToolboxHostManager {
     this.host.frame.setAttribute("aria-label", L10N.getStr("toolbox.label"));
     this.host.frame.ownerDocument.defaultView.addEventListener(
       "message",
-      this._onMessage,
+      this.#onMessageHandler,
       { signal: this.eventController.signal }
     );
 
@@ -118,7 +120,7 @@ class ToolboxHostManager {
       contentWindow: this.host.frame.contentWindow,
       frameId: this.frameId,
     });
-    toolbox.once("destroyed", this._onToolboxDestroyed.bind(this));
+    toolbox.once("destroyed", this.#onToolboxDestroyed.bind(this));
 
     // Prevent reloading the toolbox when loading the tools in a tab
     // (e.g. from about:debugging)
@@ -154,7 +156,7 @@ class ToolboxHostManager {
     }
   }
 
-  _onToolboxDestroyed() {
+  #onToolboxDestroyed() {
     // Delay self-destruction to let the debugger complete async destruction.
     // Otherwise it throws when running browser_dbg-breakpoints-in-evaled-sources.js
     // because the promise middleware delay each promise action using setTimeout...
@@ -163,7 +165,7 @@ class ToolboxHostManager {
     });
   }
 
-  _onMessage(event) {
+  #onMessage(event) {
     if (!event.data) {
       return;
     }
@@ -307,7 +309,7 @@ class ToolboxHostManager {
     this.host.setTitle(this.host.frame.contentWindow.document.title);
     this.host.frame.ownerDocument.defaultView.addEventListener(
       "message",
-      this._onMessage,
+      this.#onMessageHandler,
       { signal: this.eventController.signal }
     );
 
@@ -357,7 +359,7 @@ class ToolboxHostManager {
         await this.switchHost(this.hostType, false);
         this.collectPendingMessages = null;
         for (const message of pendingMessages) {
-          this._onMessage(message);
+          this.#onMessage(message);
         }
       }
       previousTab.addEventListener(
